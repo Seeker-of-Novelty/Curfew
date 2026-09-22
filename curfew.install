@@ -1,0 +1,52 @@
+post_install() {
+    cat <<'MSG'
+
+  Curfew is installed but not yet running.
+
+    sudo systemctl enable --now curfewd            start it, and at boot
+    systemctl --user enable --now curfew-lists.timer   keep blocklists fresh
+    curfew                                         open the app
+    curfewctl status                               check from a terminal
+
+  Nothing is blocked until you configure it.
+
+MSG
+    _refresh
+}
+
+post_upgrade() {
+    if systemctl is-active --quiet curfewd; then
+        systemctl restart curfewd
+        echo "  curfewd restarted."
+    fi
+    _refresh
+}
+
+pre_remove() {
+    # Stop the per-user refresh timer before the binary it calls disappears.
+    systemctl --global disable curfew-lists.timer 2>/dev/null || true
+    # Release the immutable flags and undo every block before the files go.
+    if [ -x /usr/bin/curfewd ]; then
+        /usr/bin/curfewd --cleanup || true
+    fi
+    systemctl disable --now curfewd 2>/dev/null || true
+}
+
+post_remove() {
+    rm -f /run/curfew/curfewd.sock 2>/dev/null || true
+    _refresh
+    cat <<'MSG'
+
+  Curfew is gone. Its settings are still in /var/lib/curfew
+  in case you reinstall. Remove them with:
+
+    sudo rm -rf /var/lib/curfew
+
+MSG
+}
+
+_refresh() {
+    command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database -q /usr/share/applications || true
+    command -v gtk-update-icon-cache   >/dev/null 2>&1 && gtk-update-icon-cache -qtf /usr/share/icons/hicolor || true
+    return 0
+}
