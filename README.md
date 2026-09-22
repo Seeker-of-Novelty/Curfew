@@ -137,7 +137,7 @@ getting out takes a deliberate sequence of steps rather than one click.
 ## Install
 
 ```sh
-git clone https://github.com/YOURNAME/curfew
+git clone https://github.com/Seeker-of-Novelty/curfew
 cd curfew
 makepkg -si
 sudo systemctl enable --now curfewd
